@@ -67,7 +67,7 @@ Two environments are included.
   <img src="figures/soccer_4.png" width="200">
 </p>
 
-Each agent get a positive reward whenever one agent drop the ball in their goal and a negative reward whenever one agent drop the ball in the opposite goal. The number of teams, number of player in each team, number of goals and number of balls can be easily modified.
+Each agent get a positive reward whenever one agent drop the ball in their goal and a negative reward whenever one agent drop the ball in the opposite goal. Each agent can pass the ball to or take it from another agent. The number of teams, number of player in each team, number of goals and number of balls can be easily modified.
 
 ### CollectGame
 
