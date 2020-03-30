@@ -64,7 +64,6 @@ Two environments are included.
 <p align="center">
   <img src="figures/soccer.png" width="200">
   <img src="figures/soccer_2.png" width="200">
-  <img src="figures/soccer_3.png" width="200">
   <img src="figures/soccer_4.png" width="200">
 </p>
 
