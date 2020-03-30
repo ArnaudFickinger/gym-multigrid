@@ -1,7 +1,7 @@
 # Multi-Agent Gridworld Environment (MultiGrid)
 
 
-Lightweight multi-agent gridworld Gym environment built on the [MiniGrid environment](https://github.com/maximecb/gym-multigrid). 
+Lightweight multi-agent gridworld Gym environment built on the [MiniGrid environment](https://github.com/maximecb/gym-minigrid). 
 
 Requirements:
 - Python 3.5+
