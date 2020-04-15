@@ -26,7 +26,7 @@ Please use this bibtex if you want to cite this repository in your publications:
 ```
 git clone https://github.com/ArnaudFickinger/gym-multigrid
 cd gym-multigrid
-pip3 install -e .
+pip install -e .
 ```
 
 ## Test

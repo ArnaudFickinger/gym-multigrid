@@ -975,10 +975,13 @@ class MultiGridEnv(gym.Env):
         assert False, "_gen_grid needs to be implemented by each environment"
 
     def _handle_pickup(self, i, rewards, fwd_pos, fwd_cell):
-        assert False, "_handle_pickup needs to be implemented by each environment"
+        pass
 
     def _handle_drop(self, i, rewards, fwd_pos, fwd_cell):
-        assert False, "_handle_drop needs to be implemented by each environment"
+        pass
+
+    def _handle_special_moves(self, i, rewards, fwd_pos, fwd_cell):
+        pass
 
     def _reward(self, current_agent, rewards):
         """
@@ -1189,6 +1192,7 @@ class MultiGridEnv(gym.Env):
                     self.grid.set(*fwd_pos, self.agents[i])
                     self.grid.set(*self.agents[i].pos, None)
                     self.agents[i].pos = fwd_pos
+                self._handle_special_moves(i, rewards, fwd_pos, fwd_cell)
 
             # Pick up an object
             elif actions[i] == self.actions.pickup:
