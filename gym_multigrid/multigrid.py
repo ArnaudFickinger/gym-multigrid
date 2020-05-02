@@ -360,6 +360,7 @@ class Agent(WorldObj):
         self.index = index
         self.view_size = 7
         self.carrying = None
+        self.terminated = False
 
     def render(self, img):
         c = COLORS[self.color]
@@ -1174,6 +1175,9 @@ class MultiGridEnv(gym.Env):
         done = False
         
         for i in order:
+
+            if self.agents[i].terminated:
+                continue
 
             # Get the position in front of the agent
             fwd_pos = self.agents[i].front_pos

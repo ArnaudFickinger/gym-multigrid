@@ -53,7 +53,6 @@ class CollectGameEnv(MultiGridEnv):
         for a in self.agents:
             self.place_agent(a)
 
-
     def _reward(self, i, rewards, reward=1):
         """
         Compute the reward to be given upon success
