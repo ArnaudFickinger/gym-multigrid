@@ -2,7 +2,7 @@ from gym_multigrid.multigrid import *
 
 class CollectGameEnv(MultiGridEnv):
     """
-    Environment in which the agents have to fetch the balls and drop them in their respective goals
+    Environment in which the agents have to collect the balls
     """
 
     def __init__(
@@ -13,11 +13,13 @@ class CollectGameEnv(MultiGridEnv):
         num_balls=[],
         agents_index = [],
         balls_index=[],
+        balls_reward=[],
         zero_sum = False
 
     ):
         self.num_balls = num_balls
         self.balls_index = balls_index
+        self.balls_reward = balls_reward
         self.zero_sum = zero_sum
 
         agents = []
@@ -43,26 +45,25 @@ class CollectGameEnv(MultiGridEnv):
         self.grid.vert_wall(0, 0)
         self.grid.vert_wall(width-1, 0)
 
-        for number, index in zip(self.num_balls, self.balls_index):
+        for number, index, reward in zip(self.num_balls, self.balls_index, self.balls_reward):
             for i in range(number):
-                obj = Ball(index)
-                self.place_obj(obj)
+                self.place_obj(Ball(index, reward))
 
         # Randomize the player start position and orientation
         for a in self.agents:
             self.place_agent(a)
 
 
-    def _reward(self, i, rewards):
+    def _reward(self, i, rewards, reward=1):
         """
         Compute the reward to be given upon success
         """
         for j,a in enumerate(self.agents):
             if a.index==i or a.index==0:
-                rewards[j]+=1
+                rewards[j]+=reward
             if self.zero_sum:
                 if a.index!=i or a.index==0:
-                    rewards[j] -= 1
+                    rewards[j] -= reward
 
     def _handle_pickup(self, i, rewards, fwd_pos, fwd_cell):
         if fwd_cell:
@@ -70,7 +71,7 @@ class CollectGameEnv(MultiGridEnv):
                 if fwd_cell.index in [0, self.agents[i].index]:
                     fwd_cell.cur_pos = np.array([-1, -1])
                     self.grid.set(*fwd_pos, None)
-                    self._reward(i, rewards)
+                    self._reward(i, rewards, fwd_cell.reward)
 
     def _handle_drop(self, i, rewards, fwd_pos, fwd_cell):
         pass
@@ -86,5 +87,6 @@ class CollectGame4HEnv10x10N2(CollectGameEnv):
         num_balls=[5],
         agents_index = [1,2,3],
         balls_index=[0],
+        balls_reward=[1],
         zero_sum=True)
 
