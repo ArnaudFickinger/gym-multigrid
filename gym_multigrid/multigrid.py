@@ -154,8 +154,11 @@ class WorldObj:
         raise NotImplementedError
 
 class ObjectGoal(WorldObj):
-    def __init__(self, index, target_type = 'ball', reward=1):
-        super().__init__('objgoal', IDX_TO_COLOR[index])
+    def __init__(self, index, target_type = 'ball', reward=1, color=None):
+        if color is None:
+            super().__init__('objgoal', IDX_TO_COLOR[index])
+        else:
+            super().__init__('objgoal', IDX_TO_COLOR[color])
         self.target_type = target_type
         self.index = index
         self.reward = reward
