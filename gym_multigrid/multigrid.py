@@ -366,7 +366,7 @@ class Agent(WorldObj):
         self.view_size = 7
         self.carrying = None
         self.terminated = False
-        self.started = False
+        self.started = True
         self.paused = False
 
     def render(self, img):
