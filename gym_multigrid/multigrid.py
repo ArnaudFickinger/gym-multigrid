@@ -154,10 +154,11 @@ class WorldObj:
         raise NotImplementedError
 
 class ObjectGoal(WorldObj):
-    def __init__(self, i, target_type):
-        super().__init__('objgoal', IDX_TO_COLOR[i])
+    def __init__(self, index, target_type = 'ball', reward=1):
+        super().__init__('objgoal', IDX_TO_COLOR[index])
         self.target_type = target_type
-        self.index = i
+        self.index = index
+        self.reward = reward
 
     def can_overlap(self):
         return False
@@ -983,7 +984,7 @@ class MultiGridEnv(gym.Env):
     def _handle_special_moves(self, i, rewards, fwd_pos, fwd_cell):
         pass
 
-    def _reward(self, current_agent, rewards):
+    def _reward(self, current_agent, rewards, reward=1):
         """
         Compute the reward to be given upon success
         """

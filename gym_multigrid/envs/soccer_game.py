@@ -60,16 +60,13 @@ class SoccerGameEnv(MultiGridEnv):
         for a in self.agents:
             self.place_agent(a)
 
-    def _reward(self, i, rewards):
-        """
-        Compute the reward to be given upon success
-        """
+    def _reward(self, i, rewards,reward=1):
         for j,a in enumerate(self.agents):
             if a.index==i or a.index==0:
-                rewards[j]+=1
+                rewards[j]+=reward
             if self.zero_sum:
                 if a.index!=i or a.index==0:
-                    rewards[j] -= 1
+                    rewards[j] -= reward
 
     def _handle_pickup(self, i, rewards, fwd_pos, fwd_cell):
         if fwd_cell:
@@ -89,7 +86,7 @@ class SoccerGameEnv(MultiGridEnv):
             if fwd_cell:
                 if fwd_cell.type == 'objgoal' and fwd_cell.target_type == self.agents[i].carrying.type:
                     if self.agents[i].carrying.index in [0, fwd_cell.index]:
-                        self._reward(fwd_cell.index, rewards)
+                        self._reward(fwd_cell.index, rewards, fwd_cell.reward)
                         self.agents[i].carrying = None
                 elif fwd_cell.type=='agent':
                     if fwd_cell.carrying is None:

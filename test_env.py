@@ -18,7 +18,7 @@ def main():
         env.render(mode='human')
         time.sleep(0.1)
 
-        ac = [env.action_space.sample() for i in range(nb_agents)]
+        ac = [env.action_space.sample() for _ in range(nb_agents)]
 
         _, _, done, _ = env.step(ac)
 
