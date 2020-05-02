@@ -366,6 +366,8 @@ class Agent(WorldObj):
         self.view_size = 7
         self.carrying = None
         self.terminated = False
+        self.started = False
+        self.paused = False
 
     def render(self, img):
         c = COLORS[self.color]
@@ -1181,7 +1183,7 @@ class MultiGridEnv(gym.Env):
         
         for i in order:
 
-            if self.agents[i].terminated:
+            if self.agents[i].terminated or self.agents[i].paused or not self.agents[i].started:
                 continue
 
             # Get the position in front of the agent
