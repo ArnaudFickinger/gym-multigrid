@@ -48,13 +48,11 @@ class SoccerGameEnv(MultiGridEnv):
         self.grid.vert_wall(width-1, 0)
 
         for i in range(len(self.goal_pst)):
-            obj = ObjectGoal(self.goal_index[i], 'ball')
-            self.place_obj(obj, top=self.goal_pst[i], size=[1,1])
+            self.place_obj(ObjectGoal(self.goal_index[i], 'ball'), top=self.goal_pst[i], size=[1,1])
 
         for number, index in zip(self.num_balls, self.balls_index):
             for i in range(number):
-                obj = Ball(index)
-                self.place_obj(obj)
+                self.place_obj(Ball(index))
 
         # Randomize the player start position and orientation
         for a in self.agents:
