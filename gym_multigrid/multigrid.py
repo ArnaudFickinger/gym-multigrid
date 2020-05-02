@@ -170,8 +170,13 @@ class ObjectGoal(WorldObj):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
 class Goal(WorldObj):
-    def __init__(self):
-        super().__init__('goal', 'green')
+    def __init__(self, index, reward=1, color=None):
+        if color is None:
+            super().__init__('goal', IDX_TO_COLOR[index])
+        else:
+            super().__init__('goal', IDX_TO_COLOR[color])
+        self.index = index
+        self.reward = reward
 
     def can_overlap(self):
         return True
