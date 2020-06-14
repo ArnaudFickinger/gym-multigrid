@@ -358,12 +358,12 @@ class Box(WorldObj):
         return True
 
 class Agent(WorldObj):
-    def __init__(self, index=0):
+    def __init__(self, index=0, view_size = 7):
         super(Agent, self).__init__('agent', IDX_TO_COLOR[index])
         self.pos = None
         self.dir = None
         self.index = index
-        self.view_size = 7
+        self.view_size = view_size
         self.carrying = None
         self.terminated = False
         self.started = True
@@ -834,7 +834,6 @@ class MultiGridEnv(gym.Env):
         max_steps=100,
         see_through_walls=False,
         seed=1,
-        view_size=7,
         agents = None,
         partial_obs = True
     ):
@@ -854,9 +853,6 @@ class MultiGridEnv(gym.Env):
 
         # Actions are discrete integer values
         self.action_space = spaces.Discrete(len(self.actions))
-
-        # Number of cells (width and height) in the agent view
-        self.view_size = view_size
 
         # Observations are dictionaries containing an
         # encoding of the grid and a textual 'mission' string
@@ -1312,9 +1308,45 @@ class MultiGridEnv(gym.Env):
             self.window = Window('gym_multigrid')
             self.window.show(block=False)
 
+        if highlight:
+
+            # Compute which cells are visible to the agent
+            _, vis_masks = self.gen_obs_grid()
+
+            highlight_mask = np.zeros(shape=(self.width, self.height), dtype=np.bool)
+
+            for i, a in enumerate(self.agents):
+
+                # Compute the world coordinates of the bottom-left corner
+                # of the agent's view area
+                f_vec = a.dir_vec
+                r_vec = a.right_vec
+                top_left = a.pos + f_vec * (a.view_size - 1) - r_vec * (a.view_size // 2)
+
+                # Mask of which cells to highlight
+
+                # For each cell in the visibility mask
+                for vis_j in range(0, a.view_size):
+                    for vis_i in range(0, a.view_size):
+                        # If this cell is not visible, don't highlight it
+                        if not vis_masks[i][vis_i, vis_j]:
+                            continue
+
+                        # Compute the world coordinates of this cell
+                        abs_i, abs_j = top_left - (f_vec * vis_j) + (r_vec * vis_i)
+
+                        if abs_i < 0 or abs_i >= self.width:
+                            continue
+                        if abs_j < 0 or abs_j >= self.height:
+                            continue
+
+                        # Mark this cell to be highlighted
+                        highlight_mask[abs_i, abs_j] = True
+
         # Render the whole grid
         img = self.grid.render(
-            tile_size
+            tile_size,
+            highlight_mask=highlight_mask if highlight else None
         )
 
         if mode == 'human':

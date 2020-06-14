@@ -29,7 +29,7 @@ def main():
     nb_agents = len(env.agents)
 
     while True:
-        env.render(mode='human')
+        env.render(mode='human', highlight=True)
         time.sleep(0.1)
 
         ac = [env.action_space.sample() for _ in range(nb_agents)]

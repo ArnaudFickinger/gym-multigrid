@@ -8,6 +8,7 @@ class SoccerGameEnv(MultiGridEnv):
     def __init__(
         self,
         size=10,
+        view_size=3,
         width=None,
         height=None,
         goal_pst = [],
@@ -26,7 +27,7 @@ class SoccerGameEnv(MultiGridEnv):
 
         agents = []
         for i in agents_index:
-            agents.append(Agent(i))
+            agents.append(Agent(i, view_size=view_size))
 
         super().__init__(
             grid_size=size,
