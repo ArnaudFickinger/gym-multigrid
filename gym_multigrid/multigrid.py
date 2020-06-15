@@ -649,7 +649,7 @@ class Grid:
         # Highlight the cell  if needed
         if len(highlights) > 0:
             for h in highlights:
-                highlight_img(img, color=COLORS[IDX_TO_COLOR[h]])
+                highlight_img(img, color=COLORS[IDX_TO_COLOR[h%len(IDX_TO_COLOR)]])
 
         # Downsample the image to perform supersampling/anti-aliasing
         img = downsample(img, subdivs)
@@ -669,9 +669,6 @@ class Grid:
         :param r: target renderer object
         :param tile_size: tile size in pixels
         """
-
-        if highlight_masks is None:
-            highlight_mask = np.zeros(shape=(self.width, self.height), dtype=np.bool)
 
         # Compute the total grid size
         width_px = self.width * tile_size
@@ -850,7 +847,8 @@ class MultiGridEnv(gym.Env):
             see_through_walls=False,
             seed=2,
             agents=None,
-            partial_obs=True
+            partial_obs=True,
+            agent_view_size=7
     ):
         self.agents = agents
 
@@ -869,14 +867,21 @@ class MultiGridEnv(gym.Env):
         # Actions are discrete integer values
         self.action_space = spaces.Discrete(len(self.actions))
 
-        # Observations are dictionaries containing an
-        # encoding of the grid and a textual 'mission' string
-        self.observation_space = spaces.Box(
-            low=0,
-            high=255,
-            shape=(width, height, 6),
-            dtype='uint8'
-        )
+        if partial_obs:
+            self.observation_space = spaces.Box(
+                low=0,
+                high=255,
+                shape=(agent_view_size, agent_view_size, 6),
+                dtype='uint8'
+            )
+
+        else:
+            self.observation_space = spaces.Box(
+                low=0,
+                high=255,
+                shape=(width, height, 6),
+                dtype='uint8'
+            )
 
         self.ob_dim = np.prod(self.observation_space.shape)
         self.ac_dim = self.action_space.n
