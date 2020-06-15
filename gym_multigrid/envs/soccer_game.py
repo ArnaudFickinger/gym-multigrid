@@ -35,7 +35,7 @@ class SoccerGameEnv(MultiGridEnv):
             height=height,
             max_steps= 10000,
             # Set this to True for maximum speed
-            see_through_walls=True,
+            see_through_walls=False,
             agents=agents
         )
 

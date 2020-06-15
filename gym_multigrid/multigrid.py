@@ -13,49 +13,49 @@ TILE_PIXELS = 32
 
 # Map of color names to RGB values
 COLORS = {
-    'red'   : np.array([255, 0, 0]),
-    'green' : np.array([0, 255, 0]),
-    'blue'  : np.array([0, 0, 255]),
+    'red': np.array([255, 0, 0]),
+    'green': np.array([0, 255, 0]),
+    'blue': np.array([0, 0, 255]),
     'purple': np.array([112, 39, 195]),
     'yellow': np.array([255, 255, 0]),
-    'grey'  : np.array([100, 100, 100])
+    'grey': np.array([100, 100, 100])
 }
 
 COLOR_NAMES = sorted(list(COLORS.keys()))
 
 # Used to map colors to integers
 COLOR_TO_IDX = {
-    'red'   : 0,
-    'green' : 1,
-    'blue'  : 2,
+    'red': 0,
+    'green': 1,
+    'blue': 2,
     'purple': 3,
     'yellow': 4,
-    'grey'  : 5
+    'grey': 5
 }
 
 IDX_TO_COLOR = dict(zip(COLOR_TO_IDX.values(), COLOR_TO_IDX.keys()))
 
 # Map of object type to integers
 OBJECT_TO_IDX = {
-    'unseen'        : 0,
-    'empty'         : 1,
-    'wall'          : 2,
-    'floor'         : 3,
-    'door'          : 4,
-    'key'           : 5,
-    'ball'          : 6,
-    'box'           : 7,
-    'goal'          : 8,
-    'lava'          : 9,
-    'agent'         : 10,
-    'objgoal'       : 11
+    'unseen': 0,
+    'empty': 1,
+    'wall': 2,
+    'floor': 3,
+    'door': 4,
+    'key': 5,
+    'ball': 6,
+    'box': 7,
+    'goal': 8,
+    'lava': 9,
+    'agent': 10,
+    'objgoal': 11
 }
 
 IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
 
 # Map of state names to integers
 STATE_TO_IDX = {
-    'open'  : 0,
+    'open': 0,
     'closed': 1,
     'locked': 2,
 }
@@ -71,6 +71,7 @@ DIR_TO_VEC = [
     # Up (negative Y)
     np.array((0, -1)),
 ]
+
 
 class WorldObj:
     """
@@ -153,8 +154,9 @@ class WorldObj:
         """Draw this object with the given renderer"""
         raise NotImplementedError
 
+
 class ObjectGoal(WorldObj):
-    def __init__(self, index, target_type = 'ball', reward=1, color=None):
+    def __init__(self, index, target_type='ball', reward=1, color=None):
         if color is None:
             super().__init__('objgoal', IDX_TO_COLOR[index])
         else:
@@ -168,6 +170,7 @@ class ObjectGoal(WorldObj):
 
     def render(self, img):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
+
 
 class Goal(WorldObj):
     def __init__(self, index, reward=1, color=None):
@@ -184,6 +187,7 @@ class Goal(WorldObj):
     def render(self, img):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
+
 class Floor(WorldObj):
     """
     Colored floor tile the agent can walk over
@@ -199,13 +203,14 @@ class Floor(WorldObj):
         # Give the floor a pale color
         c = COLORS[self.color]
         r.setLineColor(100, 100, 100, 0)
-        r.setColor(*c/2)
+        r.setColor(*c / 2)
         r.drawPolygon([
-            (1          , TILE_PIXELS),
+            (1, TILE_PIXELS),
             (TILE_PIXELS, TILE_PIXELS),
-            (TILE_PIXELS,           1),
-            (1          ,           1)
+            (TILE_PIXELS, 1),
+            (1, 1)
         ])
+
 
 class Lava(WorldObj):
     def __init__(self):
@@ -224,10 +229,11 @@ class Lava(WorldObj):
         for i in range(3):
             ylo = 0.3 + 0.2 * i
             yhi = 0.4 + 0.2 * i
-            fill_coords(img, point_in_line(0.1, ylo, 0.3, yhi, r=0.03), (0,0,0))
-            fill_coords(img, point_in_line(0.3, yhi, 0.5, ylo, r=0.03), (0,0,0))
-            fill_coords(img, point_in_line(0.5, ylo, 0.7, yhi, r=0.03), (0,0,0))
-            fill_coords(img, point_in_line(0.7, yhi, 0.9, ylo, r=0.03), (0,0,0))
+            fill_coords(img, point_in_line(0.1, ylo, 0.3, yhi, r=0.03), (0, 0, 0))
+            fill_coords(img, point_in_line(0.3, yhi, 0.5, ylo, r=0.03), (0, 0, 0))
+            fill_coords(img, point_in_line(0.5, ylo, 0.7, yhi, r=0.03), (0, 0, 0))
+            fill_coords(img, point_in_line(0.7, yhi, 0.9, ylo, r=0.03), (0, 0, 0))
+
 
 class Wall(WorldObj):
     def __init__(self, color='grey'):
@@ -238,6 +244,7 @@ class Wall(WorldObj):
 
     def render(self, img):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
+
 
 class Door(WorldObj):
     def __init__(self, color, is_open=False, is_locked=False):
@@ -282,7 +289,7 @@ class Door(WorldObj):
 
         if self.is_open:
             fill_coords(img, point_in_rect(0.88, 1.00, 0.00, 1.00), c)
-            fill_coords(img, point_in_rect(0.92, 0.96, 0.04, 0.96), (0,0,0))
+            fill_coords(img, point_in_rect(0.92, 0.96, 0.04, 0.96), (0, 0, 0))
             return
 
         # Door frame and door
@@ -294,12 +301,13 @@ class Door(WorldObj):
             fill_coords(img, point_in_rect(0.52, 0.75, 0.50, 0.56), c)
         else:
             fill_coords(img, point_in_rect(0.00, 1.00, 0.00, 1.00), c)
-            fill_coords(img, point_in_rect(0.04, 0.96, 0.04, 0.96), (0,0,0))
+            fill_coords(img, point_in_rect(0.04, 0.96, 0.04, 0.96), (0, 0, 0))
             fill_coords(img, point_in_rect(0.08, 0.92, 0.08, 0.92), c)
-            fill_coords(img, point_in_rect(0.12, 0.88, 0.12, 0.88), (0,0,0))
+            fill_coords(img, point_in_rect(0.12, 0.88, 0.12, 0.88), (0, 0, 0))
 
             # Draw door handle
             fill_coords(img, point_in_circle(cx=0.75, cy=0.50, r=0.08), c)
+
 
 class Key(WorldObj):
     def __init__(self, color='blue'):
@@ -320,7 +328,8 @@ class Key(WorldObj):
 
         # Ring
         fill_coords(img, point_in_circle(cx=0.56, cy=0.28, r=0.190), c)
-        fill_coords(img, point_in_circle(cx=0.56, cy=0.28, r=0.064), (0,0,0))
+        fill_coords(img, point_in_circle(cx=0.56, cy=0.28, r=0.064), (0, 0, 0))
+
 
 class Ball(WorldObj):
     def __init__(self, index, reward=1):
@@ -333,6 +342,7 @@ class Ball(WorldObj):
 
     def render(self, img):
         fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[self.color])
+
 
 class Box(WorldObj):
     def __init__(self, color, contains=None):
@@ -347,7 +357,7 @@ class Box(WorldObj):
 
         # Outline
         fill_coords(img, point_in_rect(0.12, 0.88, 0.12, 0.88), c)
-        fill_coords(img, point_in_rect(0.18, 0.82, 0.18, 0.82), (0,0,0))
+        fill_coords(img, point_in_rect(0.18, 0.82, 0.18, 0.82), (0, 0, 0))
 
         # Horizontal slit
         fill_coords(img, point_in_rect(0.16, 0.84, 0.47, 0.53), c)
@@ -357,8 +367,9 @@ class Box(WorldObj):
         env.grid.set(*pos, self.contains)
         return True
 
+
 class Agent(WorldObj):
-    def __init__(self, index=0, view_size = 7):
+    def __init__(self, index=0, view_size=7):
         super(Agent, self).__init__('agent', IDX_TO_COLOR[index])
         self.pos = None
         self.dir = None
@@ -380,20 +391,21 @@ class Agent(WorldObj):
         tri_fn = rotate_fn(tri_fn, cx=0.5, cy=0.5, theta=0.5 * math.pi * self.dir)
         fill_coords(img, tri_fn, c)
 
-    def encode(self, current_agent = False):
+    def encode(self, current_agent=False):
         """Encode the a description of this object as a 3-tuple of integers"""
         if self.carrying:
             if current_agent:
-                return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], OBJECT_TO_IDX[self.carrying.type], COLOR_TO_IDX[self.carrying.color], self.dir, 1)
+                return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], OBJECT_TO_IDX[self.carrying.type],
+                        COLOR_TO_IDX[self.carrying.color], self.dir, 1)
             else:
-                return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], OBJECT_TO_IDX[self.carrying.type], COLOR_TO_IDX[self.carrying.color], self.dir, 0)
+                return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], OBJECT_TO_IDX[self.carrying.type],
+                        COLOR_TO_IDX[self.carrying.color], self.dir, 0)
 
         else:
             if current_agent:
                 return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0, 0, self.dir, 1)
             else:
                 return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0, 0, self.dir, 0)
-
 
     @property
     def dir_vec(self):
@@ -498,6 +510,7 @@ class Agent(WorldObj):
 
         return self.relative_coords(x, y) is not None
 
+
 class Grid:
     """
     Represent a grid and operations on it
@@ -531,7 +544,7 @@ class Grid:
         return False
 
     def __eq__(self, other):
-        grid1  = self.encode()
+        grid1 = self.encode()
         grid2 = other.encode()
         return np.array_equal(grid2, grid1)
 
@@ -566,9 +579,9 @@ class Grid:
 
     def wall_rect(self, x, y, w, h):
         self.horz_wall(x, y, w)
-        self.horz_wall(x, y+h-1, w)
+        self.horz_wall(x, y + h - 1, w)
         self.vert_wall(x, y, h)
-        self.vert_wall(x+w-1, y, h)
+        self.vert_wall(x + w - 1, y, h)
 
     def rotate_left(self):
         """
@@ -597,7 +610,7 @@ class Grid:
                 y = topY + j
 
                 if x >= 0 and x < self.width and \
-                   y >= 0 and y < self.height:
+                        y >= 0 and y < self.height:
                     v = self.get(x, y)
                 else:
                     v = Wall()
@@ -608,17 +621,17 @@ class Grid:
 
     @classmethod
     def render_tile(
-        cls,
-        obj,
-        highlight=False,
-        tile_size=TILE_PIXELS,
-        subdivs=3
+            cls,
+            obj,
+            highlights=[],
+            tile_size=TILE_PIXELS,
+            subdivs=3
     ):
         """
         Render a tile and cache the result
         """
 
-        key = (highlight, tile_size)
+        key = (*highlights, tile_size)
         key = obj.encode() + key if obj else key
 
         if key in cls.tile_cache:
@@ -634,8 +647,9 @@ class Grid:
             obj.render(img)
 
         # Highlight the cell  if needed
-        if highlight:
-            highlight_img(img)
+        if len(highlights) > 0:
+            for h in highlights:
+                highlight_img(img, color=COLORS[IDX_TO_COLOR[h]])
 
         # Downsample the image to perform supersampling/anti-aliasing
         img = downsample(img, subdivs)
@@ -646,9 +660,9 @@ class Grid:
         return img
 
     def render(
-        self,
-        tile_size,
-        highlight_mask=None
+            self,
+            tile_size,
+            highlight_masks=None
     ):
         """
         Render this grid at a given scale
@@ -656,7 +670,7 @@ class Grid:
         :param tile_size: tile size in pixels
         """
 
-        if highlight_mask is None:
+        if highlight_masks is None:
             highlight_mask = np.zeros(shape=(self.width, self.height), dtype=np.bool)
 
         # Compute the total grid size
@@ -673,14 +687,14 @@ class Grid:
                 # agent_here = np.array_equal(agent_pos, (i, j))
                 tile_img = Grid.render_tile(
                     cell,
-                    highlight=highlight_mask[i, j],
+                    highlights=[] if highlight_masks is None else highlight_masks[i, j],
                     tile_size=tile_size
                 )
 
                 ymin = j * tile_size
-                ymax = (j+1) * tile_size
+                ymax = (j + 1) * tile_size
                 xmin = i * tile_size
-                xmax = (i+1) * tile_size
+                xmax = (i + 1) * tile_size
                 img[ymin:ymax, xmin:xmax, :] = tile_img
 
         return img
@@ -766,7 +780,7 @@ class Grid:
         mask[agent_pos[0], agent_pos[1]] = True
 
         for j in reversed(range(0, grid.height)):
-            for i in range(0, grid.width-1):
+            for i in range(0, grid.width - 1):
                 if not mask[i, j]:
                     continue
 
@@ -774,10 +788,10 @@ class Grid:
                 if cell and not cell.see_behind():
                     continue
 
-                mask[i+1, j] = True
+                mask[i + 1, j] = True
                 if j > 0:
-                    mask[i+1, j-1] = True
-                    mask[i, j-1] = True
+                    mask[i + 1, j - 1] = True
+                    mask[i, j - 1] = True
 
             for i in reversed(range(1, grid.width)):
                 if not mask[i, j]:
@@ -787,10 +801,10 @@ class Grid:
                 if cell and not cell.see_behind():
                     continue
 
-                mask[i-1, j] = True
+                mask[i - 1, j] = True
                 if j > 0:
-                    mask[i-1, j-1] = True
-                    mask[i, j-1] = True
+                    mask[i - 1, j - 1] = True
+                    mask[i, j - 1] = True
 
         for j in range(0, grid.height):
             for i in range(0, grid.width):
@@ -799,6 +813,7 @@ class Grid:
 
         return mask
 
+
 class MultiGridEnv(gym.Env):
     """
     2D grid world game environment
@@ -806,7 +821,7 @@ class MultiGridEnv(gym.Env):
 
     metadata = {
         'render.modes': ['human', 'rgb_array'],
-        'video.frames_per_second' : 10
+        'video.frames_per_second': 10
     }
 
     # Enumeration of possible actions
@@ -827,15 +842,15 @@ class MultiGridEnv(gym.Env):
         done = 6
 
     def __init__(
-        self,
-        grid_size=None,
-        width=None,
-        height=None,
-        max_steps=100,
-        see_through_walls=False,
-        seed=1,
-        agents = None,
-        partial_obs = True
+            self,
+            grid_size=None,
+            width=None,
+            height=None,
+            max_steps=100,
+            see_through_walls=False,
+            seed=2,
+            agents=None,
+            partial_obs=True
     ):
         self.agents = agents
 
@@ -928,14 +943,14 @@ class MultiGridEnv(gym.Env):
 
         # Map of object types to short string
         OBJECT_TO_STR = {
-            'wall'          : 'W',
-            'floor'         : 'F',
-            'door'          : 'D',
-            'key'           : 'K',
-            'ball'          : 'A',
-            'box'           : 'B',
-            'goal'          : 'G',
-            'lava'          : 'V',
+            'wall': 'W',
+            'floor': 'F',
+            'door': 'D',
+            'key': 'K',
+            'ball': 'A',
+            'box': 'B',
+            'goal': 'G',
+            'lava': 'V',
         }
 
         # Short string for opened door
@@ -1064,12 +1079,12 @@ class MultiGridEnv(gym.Env):
         )
 
     def place_obj(self,
-        obj,
-        top=None,
-        size=None,
-        reject_fn=None,
-        max_tries=math.inf
-    ):
+                  obj,
+                  top=None,
+                  size=None,
+                  reject_fn=None,
+                  max_tries=math.inf
+                  ):
         """
         Place an object at an empty position in the grid
 
@@ -1129,12 +1144,12 @@ class MultiGridEnv(gym.Env):
         obj.cur_pos = (i, j)
 
     def place_agent(
-        self,
-        agent,
-        top=None,
-        size=None,
-        rand_dir=True,
-        max_tries=math.inf
+            self,
+            agent,
+            top=None,
+            size=None,
+            rand_dir=True,
+            max_tries=math.inf
     ):
         """
         Set the agent's starting point at an empty position in the grid
@@ -1176,7 +1191,7 @@ class MultiGridEnv(gym.Env):
 
         rewards = np.zeros(len(actions))
         done = False
-        
+
         for i in order:
 
             if self.agents[i].terminated or self.agents[i].paused or not self.agents[i].started:
@@ -1279,7 +1294,7 @@ class MultiGridEnv(gym.Env):
 
         return obs
 
-    def get_obs_render(self, obs, tile_size=TILE_PIXELS//2):
+    def get_obs_render(self, obs, tile_size=TILE_PIXELS // 2):
         """
         Render an agent observation for visualization
         """
@@ -1313,7 +1328,7 @@ class MultiGridEnv(gym.Env):
             # Compute which cells are visible to the agent
             _, vis_masks = self.gen_obs_grid()
 
-            highlight_mask = np.zeros(shape=(self.width, self.height), dtype=np.bool)
+            highlight_masks = {(i, j): [] for i in range(self.width) for j in range(self.height)}
 
             for i, a in enumerate(self.agents):
 
@@ -1341,12 +1356,12 @@ class MultiGridEnv(gym.Env):
                             continue
 
                         # Mark this cell to be highlighted
-                        highlight_mask[abs_i, abs_j] = True
+                        highlight_masks[abs_i, abs_j].append(i)
 
         # Render the whole grid
         img = self.grid.render(
             tile_size,
-            highlight_mask=highlight_mask if highlight else None
+            highlight_masks=highlight_masks if highlight else None
         )
 
         if mode == 'human':
