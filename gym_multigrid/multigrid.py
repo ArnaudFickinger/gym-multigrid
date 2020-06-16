@@ -838,6 +838,15 @@ class MultiGridEnv(gym.Env):
         # Done completing task
         done = 6
 
+        still = 7
+
+    class SmallActions(IntEnum):
+        # Turn left, turn right, move forward
+        left = 0
+        right = 1
+        forward = 2
+        still = 3
+
     def __init__(
             self,
             grid_size=None,
@@ -848,7 +857,8 @@ class MultiGridEnv(gym.Env):
             seed=2,
             agents=None,
             partial_obs=True,
-            agent_view_size=7
+            agent_view_size=7,
+            small_actions=False
     ):
         self.agents = agents
 
@@ -862,7 +872,10 @@ class MultiGridEnv(gym.Env):
             height = grid_size
 
         # Action enumeration for this environment
-        self.actions = MultiGridEnv.Actions
+        if small_actions:
+            self.actions = MultiGridEnv.SmallActions
+        else:
+            self.actions = MultiGridEnv.Actions
 
         # Actions are discrete integer values
         self.action_space = spaces.Discrete(len(self.actions))
@@ -1199,7 +1212,7 @@ class MultiGridEnv(gym.Env):
 
         for i in order:
 
-            if self.agents[i].terminated or self.agents[i].paused or not self.agents[i].started:
+            if self.agents[i].terminated or self.agents[i].paused or not self.agents[i].started or actions[i] == self.actions.still:
                 continue
 
             # Get the position in front of the agent
