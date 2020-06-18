@@ -51,7 +51,15 @@ OBJECT_TO_IDX = {
     'objgoal': 11
 }
 
+OBJECT_TO_IDX_SMALL = {
+    'unseen': 0,
+    'empty': 1,
+    'wall': 2,
+    'agent': 3
+}
+
 IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
+IDX_TO_OBJECT_SMALL = dict(zip(OBJECT_TO_IDX_SMALL.values(), OBJECT_TO_IDX_SMALL.keys()))
 
 # Map of state names to integers
 STATE_TO_IDX = {
@@ -78,8 +86,9 @@ class WorldObj:
     Base class for grid world objects
     """
 
-    def __init__(self, type, color):
-        assert type in OBJECT_TO_IDX, type
+    def __init__(self, type, color, small_obs=False):
+        world = OBJECT_TO_IDX_SMALL if small_obs else OBJECT_TO_IDX
+        assert type in world, type
         assert color in COLOR_TO_IDX, color
         self.type = type
         self.color = color
@@ -111,9 +120,13 @@ class WorldObj:
         """Method to trigger/toggle an action this object performs"""
         return False
 
-    def encode(self, current_agent=False):
+    def encode(self, current_agent=False, small_obs=False):
         """Encode the a description of this object as a 3-tuple of integers"""
-        return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0, 0, 0, 0)
+        world = OBJECT_TO_IDX_SMALL if small_obs else OBJECT_TO_IDX
+        if len(world)==4:
+            return (world[self.type], COLOR_TO_IDX[self.color], 0)
+        else:
+            return (world[self.type], COLOR_TO_IDX[self.color], 0, 0, 0, 0)
 
     @staticmethod
     def decode(type_idx, color_idx, state):
@@ -271,7 +284,7 @@ class Door(WorldObj):
         self.is_open = not self.is_open
         return True
 
-    def encode(self, current_agent=False):
+    def encode(self, current_agent=False, small_obs=False):
         """Encode the a description of this object as a 3-tuple of integers"""
 
         # State, 0: open, 1: closed, 2: locked
@@ -391,21 +404,24 @@ class Agent(WorldObj):
         tri_fn = rotate_fn(tri_fn, cx=0.5, cy=0.5, theta=0.5 * math.pi * self.dir)
         fill_coords(img, tri_fn, c)
 
-    def encode(self, current_agent=False):
+    def encode(self, current_agent=False, small_obs=False):
         """Encode the a description of this object as a 3-tuple of integers"""
-        if self.carrying:
+        world = OBJECT_TO_IDX_SMALL if small_obs else OBJECT_TO_IDX
+        if len(world) == 4:
+            return (world[self.type], COLOR_TO_IDX[self.color], self.dir)
+        elif self.carrying:
             if current_agent:
-                return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], OBJECT_TO_IDX[self.carrying.type],
+                return (world[self.type], COLOR_TO_IDX[self.color], world[self.carrying.type],
                         COLOR_TO_IDX[self.carrying.color], self.dir, 1)
             else:
-                return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], OBJECT_TO_IDX[self.carrying.type],
+                return (world[self.type], COLOR_TO_IDX[self.color], world[self.carrying.type],
                         COLOR_TO_IDX[self.carrying.color], self.dir, 0)
 
         else:
             if current_agent:
-                return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0, 0, self.dir, 1)
+                return (world[self.type], COLOR_TO_IDX[self.color], 0, 0, self.dir, 1)
             else:
-                return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0, 0, self.dir, 0)
+                return (world[self.type], COLOR_TO_IDX[self.color], 0, 0, self.dir, 0)
 
     @property
     def dir_vec(self):
@@ -696,15 +712,16 @@ class Grid:
 
         return img
 
-    def encode(self, vis_mask=None):
+    def encode(self, vis_mask=None, small_obs=False):
         """
         Produce a compact numpy encoding of the grid
         """
+        world = OBJECT_TO_IDX_SMALL if small_obs else OBJECT_TO_IDX
 
         if vis_mask is None:
             vis_mask = np.ones((self.width, self.height), dtype=bool)
 
-        array = np.zeros((self.width, self.height, 4), dtype='uint8')
+        array = np.zeros((self.width, self.height, 3 if len(world)==4 else 6), dtype='uint8')
 
         for i in range(self.width):
             for j in range(self.height):
@@ -712,25 +729,28 @@ class Grid:
                     v = self.get(i, j)
 
                     if v is None:
-                        array[i, j, 0] = OBJECT_TO_IDX['empty']
+                        array[i, j, 0] = world['empty']
                         array[i, j, 1] = 0
                         array[i, j, 2] = 0
-                        array[i, j, 3] = 0
+                        if len(world) > 4:
+                            array[i, j, 3] = 0
+                            array[i, j, 4] = 0
+                            array[i, j, 5] = 0
 
                     else:
-                        array[i, j, :] = v.encode()
+                        array[i, j, :] = v.encode(small_obs=small_obs)
 
         return array
 
-    def encode_for_agents(self, agent_pos, vis_mask=None):
+    def encode_for_agents(self, agent_pos, vis_mask=None, small_obs=False):
         """
         Produce a compact numpy encoding of the grid
         """
-
+        world = OBJECT_TO_IDX_SMALL if small_obs else OBJECT_TO_IDX
         if vis_mask is None:
             vis_mask = np.ones((self.width, self.height), dtype=bool)
 
-        array = np.zeros((self.width, self.height, 6), dtype='uint8')
+        array = np.zeros((self.width, self.height, 3 if len(world)==4 else 6), dtype='uint8')
 
         for i in range(self.width):
             for j in range(self.height):
@@ -738,38 +758,39 @@ class Grid:
                     v = self.get(i, j)
 
                     if v is None:
-                        array[i, j, 0] = OBJECT_TO_IDX['empty']
+                        array[i, j, 0] = world['empty']
                         array[i, j, 1] = 0
                         array[i, j, 2] = 0
-                        array[i, j, 3] = 0
-                        array[i, j, 4] = 0
-                        array[i, j, 5] = 0
+                        if len(world)>4:
+                            array[i, j, 3] = 0
+                            array[i, j, 4] = 0
+                            array[i, j, 5] = 0
 
                     else:
-                        array[i, j, :] = v.encode(current_agent=np.array_equal(agent_pos, (i, j)))
+                        array[i, j, :] = v.encode(current_agent=np.array_equal(agent_pos, (i, j)), small_obs=small_obs)
 
         return array
 
-    @staticmethod
-    def decode(array):
-        """
-        Decode an array grid encoding back into a grid
-        """
-
-        width, height, channels = array.shape
-        assert channels == 3
-
-        vis_mask = np.ones(shape=(width, height), dtype=np.bool)
-
-        grid = Grid(width, height)
-        for i in range(width):
-            for j in range(height):
-                type_idx, color_idx, state = array[i, j]
-                v = WorldObj.decode(type_idx, color_idx, state)
-                grid.set(i, j, v)
-                vis_mask[i, j] = (type_idx != OBJECT_TO_IDX['unseen'])
-
-        return grid, vis_mask
+    # @staticmethod
+    # def decode(array):
+    #     """
+    #     Decode an array grid encoding back into a grid
+    #     """
+    #
+    #     width, height, channels = array.shape
+    #     assert channels == 3
+    #
+    #     vis_mask = np.ones(shape=(width, height), dtype=np.bool)
+    #
+    #     grid = Grid(width, height)
+    #     for i in range(width):
+    #         for j in range(height):
+    #             type_idx, color_idx, state = array[i, j]
+    #             v = WorldObj.decode(type_idx, color_idx, state)
+    #             grid.set(i, j, v)
+    #             vis_mask[i, j] = (type_idx != OBJECT_TO_IDX['unseen'])
+    #
+    #     return grid, vis_mask
 
     def process_vis(grid, agent_pos):
         mask = np.zeros(shape=(grid.width, grid.height), dtype=np.bool)
@@ -858,7 +879,8 @@ class MultiGridEnv(gym.Env):
             agents=None,
             partial_obs=True,
             agent_view_size=7,
-            small_actions=False
+            small_actions=False,
+            small_obs = False
     ):
         self.agents = agents
 
@@ -880,11 +902,13 @@ class MultiGridEnv(gym.Env):
         # Actions are discrete integer values
         self.action_space = spaces.Discrete(len(self.actions))
 
+        self.small_obs=small_obs
+
         if partial_obs:
             self.observation_space = spaces.Box(
                 low=0,
                 high=255,
-                shape=(agent_view_size, agent_view_size, 6),
+                shape=(agent_view_size, agent_view_size, 3 if small_obs else 6),
                 dtype='uint8'
             )
 
@@ -892,7 +916,7 @@ class MultiGridEnv(gym.Env):
             self.observation_space = spaces.Box(
                 low=0,
                 high=255,
-                shape=(width, height, 6),
+                shape=(width, height, 3 if small_obs else 6),
                 dtype='uint8'
             )
 
@@ -1308,7 +1332,7 @@ class MultiGridEnv(gym.Env):
         grids, vis_masks = self.gen_obs_grid()
 
         # Encode the partially observable view into a numpy array
-        obs = [grid.encode_for_agents([grid.width // 2, grid.height - 1]) for grid, vis_mask in zip(grids, vis_masks)]
+        obs = [grid.encode_for_agents([grid.width // 2, grid.height - 1], vis_mask, small_obs=self.small_obs) for grid, vis_mask in zip(grids, vis_masks)]
 
         return obs
 

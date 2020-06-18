@@ -14,7 +14,8 @@ class CollectGameEnv(MultiGridEnv):
         agents_index = [],
         balls_index=[],
         balls_reward=[],
-        zero_sum = False
+        zero_sum = False,
+        view_size=7
 
     ):
         self.num_balls = num_balls
@@ -24,7 +25,7 @@ class CollectGameEnv(MultiGridEnv):
 
         agents = []
         for i in agents_index:
-            agents.append(Agent(i))
+            agents.append(Agent(i, view_size=view_size))
 
         super().__init__(
             grid_size=size,
@@ -32,9 +33,12 @@ class CollectGameEnv(MultiGridEnv):
             height=height,
             max_steps= 10000,
             # Set this to True for maximum speed
-            see_through_walls=True,
-            agents=agents
+            see_through_walls=False,
+            agents=agents,
+            agent_view_size=view_size
         )
+
+
 
     def _gen_grid(self, width, height):
         self.grid = Grid(width, height)
@@ -52,6 +56,7 @@ class CollectGameEnv(MultiGridEnv):
         # Randomize the player start position and orientation
         for a in self.agents:
             self.place_agent(a)
+
 
     def _reward(self, i, rewards, reward=1):
         """
