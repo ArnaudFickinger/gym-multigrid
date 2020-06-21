@@ -33,6 +33,13 @@ COLOR_TO_IDX = {
     'grey': 5
 }
 
+COLOR_TO_IDX_SMALL = {
+    'red': 0,
+    'green': 1,
+    'blue': 2,
+    'grey': 3
+}
+
 IDX_TO_COLOR = dict(zip(COLOR_TO_IDX.values(), COLOR_TO_IDX.keys()))
 
 # Map of object type to integers
@@ -123,10 +130,11 @@ class WorldObj:
     def encode(self, current_agent=False, small_obs=False):
         """Encode the a description of this object as a 3-tuple of integers"""
         world = OBJECT_TO_IDX_SMALL if small_obs else OBJECT_TO_IDX
+        world_color = COLOR_TO_IDX_SMALL if small_obs else COLOR_TO_IDX
         if len(world)==4:
-            return (world[self.type], COLOR_TO_IDX[self.color], 0)
+            return (world[self.type], world_color[self.color], 0)
         else:
-            return (world[self.type], COLOR_TO_IDX[self.color], 0, 0, 0, 0)
+            return (world[self.type], world_color[self.color], 0, 0, 0, 0)
 
     @staticmethod
     def decode(type_idx, color_idx, state):
@@ -407,21 +415,22 @@ class Agent(WorldObj):
     def encode(self, current_agent=False, small_obs=False):
         """Encode the a description of this object as a 3-tuple of integers"""
         world = OBJECT_TO_IDX_SMALL if small_obs else OBJECT_TO_IDX
+        world_color = COLOR_TO_IDX_SMALL if small_obs else COLOR_TO_IDX
         if len(world) == 4:
-            return (world[self.type], COLOR_TO_IDX[self.color], self.dir)
+            return (world[self.type], world_color[self.color], self.dir)
         elif self.carrying:
             if current_agent:
-                return (world[self.type], COLOR_TO_IDX[self.color], world[self.carrying.type],
-                        COLOR_TO_IDX[self.carrying.color], self.dir, 1)
+                return (world[self.type], world_color[self.color], world[self.carrying.type],
+                        world_color[self.carrying.color], self.dir, 1)
             else:
-                return (world[self.type], COLOR_TO_IDX[self.color], world[self.carrying.type],
-                        COLOR_TO_IDX[self.carrying.color], self.dir, 0)
+                return (world[self.type], world_color[self.color], world[self.carrying.type],
+                        world_color[self.carrying.color], self.dir, 0)
 
         else:
             if current_agent:
-                return (world[self.type], COLOR_TO_IDX[self.color], 0, 0, self.dir, 1)
+                return (world[self.type], world_color[self.color], 0, 0, self.dir, 1)
             else:
-                return (world[self.type], COLOR_TO_IDX[self.color], 0, 0, self.dir, 0)
+                return (world[self.type], world_color[self.color], 0, 0, self.dir, 0)
 
     @property
     def dir_vec(self):
@@ -1290,6 +1299,9 @@ class MultiGridEnv(gym.Env):
             obs = self.gen_obs()
         else:
             obs = [self.grid.encode_for_agents(self.agents[i].pos) for i in range(len(actions))]
+
+        if self.small_obs:
+            obs=[ob/3 for ob in obs]
 
         return obs, rewards, done, {}
 

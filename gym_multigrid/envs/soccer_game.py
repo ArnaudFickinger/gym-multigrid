@@ -38,7 +38,6 @@ class SoccerGameEnv(MultiGridEnv):
             see_through_walls=False,
             agents=agents,
             agent_view_size=view_size,
-            small_obs=True
         )
 
     def _gen_grid(self, width, height):
