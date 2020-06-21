@@ -974,6 +974,8 @@ class MultiGridEnv(gym.Env):
             obs = self.gen_obs()
         else:
             obs = [self.grid.encode_for_agents(self.agents[i].pos) for i in range(len(self.agents))]
+        if self.small_obs:
+            obs=[ob/3 for ob in obs]
         return obs
 
     def seed(self, seed=1337):
