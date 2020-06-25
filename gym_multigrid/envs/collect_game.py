@@ -23,9 +23,11 @@ class CollectGameEnv(MultiGridEnv):
         self.balls_reward = balls_reward
         self.zero_sum = zero_sum
 
+        self.world = World
+
         agents = []
         for i in agents_index:
-            agents.append(Agent(i, view_size=view_size))
+            agents.append(Agent(self.world, i, view_size=view_size))
 
         super().__init__(
             grid_size=size,
@@ -51,7 +53,7 @@ class CollectGameEnv(MultiGridEnv):
 
         for number, index, reward in zip(self.num_balls, self.balls_index, self.balls_reward):
             for i in range(number):
-                self.place_obj(Ball(index, reward))
+                self.place_obj(Ball(self.world, index, reward))
 
         # Randomize the player start position and orientation
         for a in self.agents:
