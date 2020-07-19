@@ -1260,7 +1260,10 @@ class MultiGridEnv(gym.Env):
 
             # Move forward
             elif actions[i] == self.actions.forward:
-                if fwd_cell is None or fwd_cell.can_overlap():
+                if fwd_cell is not None and fwd_cell.type == 'goal':
+                    done = True
+                    self._reward(i, rewards, 1)
+                elif fwd_cell is None or fwd_cell.can_overlap():
                     self.grid.set(*fwd_pos, self.agents[i])
                     self.grid.set(*self.agents[i].pos, None)
                     self.agents[i].pos = fwd_pos
