@@ -193,7 +193,7 @@ class Goal(WorldObj):
 
 class Switch(WorldObj):
     def __init__(self, world):
-        super().__init__(world, 'goal', world.IDX_TO_COLOR[0])
+        super().__init__(world, 'switch', world.IDX_TO_COLOR[0])
 
     def can_overlap(self):
         return True
