@@ -54,7 +54,8 @@ class World:
         'goal': 8,
         'lava': 9,
         'agent': 10,
-        'objgoal': 11
+        'objgoal': 11,
+        'switch': 12
     }
     IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
 
@@ -183,6 +184,16 @@ class Goal(WorldObj):
             super().__init__(world, 'goal', world.IDX_TO_COLOR[color])
         self.index = index
         self.reward = reward
+
+    def can_overlap(self):
+        return True
+
+    def render(self, img):
+        fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
+
+class Switch(WorldObj):
+    def __init__(self, world):
+        super().__init__(world, 'goal', world.IDX_TO_COLOR[0])
 
     def can_overlap(self):
         return True
@@ -1052,6 +1063,9 @@ class MultiGridEnv(gym.Env):
     def _handle_special_moves(self, i, rewards, fwd_pos, fwd_cell):
         pass
 
+    def _handle_switch(self, i, rewards, fwd_pos, fwd_cell):
+        pass
+
     def _reward(self, current_agent, rewards, reward=1):
         """
         Compute the reward to be given upon success
@@ -1260,9 +1274,12 @@ class MultiGridEnv(gym.Env):
 
             # Move forward
             elif actions[i] == self.actions.forward:
-                if fwd_cell is not None and fwd_cell.type == 'goal':
-                    done = True
-                    self._reward(i, rewards, 1)
+                if fwd_cell is not None:
+                    if fwd_cell.type == 'goal':
+                        done = True
+                        self._reward(i, rewards, 1)
+                    elif fwd_cell.type == 'switch':
+                        self._handle_switch(i, rewards, fwd_pos, fwd_cell)
                 elif fwd_cell is None or fwd_cell.can_overlap():
                     self.grid.set(*fwd_pos, self.agents[i])
                     self.grid.set(*self.agents[i].pos, None)
