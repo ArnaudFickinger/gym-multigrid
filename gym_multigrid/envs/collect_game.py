@@ -46,10 +46,10 @@ class CollectGameEnv(MultiGridEnv):
         self.grid = Grid(width, height)
 
         # Generate the surrounding walls
-        self.grid.horz_wall(0, 0)
-        self.grid.horz_wall(0, height-1)
-        self.grid.vert_wall(0, 0)
-        self.grid.vert_wall(width-1, 0)
+        self.grid.horz_wall(self.world, 0, 0)
+        self.grid.horz_wall(self.world, 0, height-1)
+        self.grid.vert_wall(self.world, 0, 0)
+        self.grid.vert_wall(self.world, width-1, 0)
 
         for number, index, reward in zip(self.num_balls, self.balls_index, self.balls_reward):
             for i in range(number):
