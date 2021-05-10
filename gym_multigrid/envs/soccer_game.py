@@ -39,7 +39,8 @@ class SoccerGameEnv(MultiGridEnv):
             # Set this to True for maximum speed
             see_through_walls=False,
             agents=agents,
-            agent_view_size=view_size
+            agent_view_size=view_size, 
+            partial_obs=False
         )
 
     def _gen_grid(self, width, height):
