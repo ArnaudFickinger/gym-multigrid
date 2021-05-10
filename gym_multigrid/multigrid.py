@@ -974,7 +974,7 @@ class MultiGridEnv(gym.Env):
         if self.partial_obs:
             obs = self.gen_obs()
         else:
-            obs = [self.grid.encode_for_agents(self.agents[i].pos) for i in range(len(self.agents))]
+            obs = [self.grid.encode_for_agents(self.world, self.agents[i].pos) for i in range(len(self.agents))]
         obs=[self.objects.normalize_obs*ob for ob in obs]
         return obs
 
@@ -1315,7 +1315,7 @@ class MultiGridEnv(gym.Env):
         if self.partial_obs:
             obs = self.gen_obs()
         else:
-            obs = [self.grid.encode_for_agents(self.agents[i].pos) for i in range(len(actions))]
+            obs = [self.grid.encode_for_agents(self.world, self.agents[i].pos) for i in range(len(actions))]
 
         obs=[self.objects.normalize_obs*ob for ob in obs]
 
