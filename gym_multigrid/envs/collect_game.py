@@ -15,8 +15,8 @@ class CollectGameEnv(MultiGridEnv):
         balls_index=[],
         balls_reward=[],
         zero_sum = False,
-        view_size=7
-
+        view_size=7,
+        partial_obs=False
     ):
         self.num_balls = num_balls
         self.balls_index = balls_index
@@ -37,7 +37,8 @@ class CollectGameEnv(MultiGridEnv):
             # Set this to True for maximum speed
             see_through_walls=False,
             agents=agents,
-            agent_view_size=view_size
+            agent_view_size=view_size,
+            partial_obs=partial_obs
         )
 
 
@@ -91,6 +92,17 @@ class CollectGame4HEnv10x10N2(CollectGameEnv):
     def __init__(self):
         super().__init__(size=10,
         num_balls=[5],
+        agents_index = [1,2,3],
+        balls_index=[0],
+        balls_reward=[1],
+        zero_sum=True)
+
+
+
+class CollectGame4HEnv20x20N2(CollectGameEnv):
+    def __init__(self):
+        super().__init__(size=20,
+        num_balls=[10],
         agents_index = [1,2,3],
         balls_index=[0],
         balls_reward=[1],

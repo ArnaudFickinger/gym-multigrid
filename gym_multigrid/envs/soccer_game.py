@@ -17,7 +17,7 @@ class SoccerGameEnv(MultiGridEnv):
         agents_index = [],
         balls_index=[],
         zero_sum = False,
-
+        partial_obs=False
     ):
         self.num_balls = num_balls
         self.goal_pst = goal_pst
@@ -39,7 +39,8 @@ class SoccerGameEnv(MultiGridEnv):
             # Set this to True for maximum speed
             see_through_walls=False,
             agents=agents,
-            agent_view_size=view_size
+            agent_view_size=view_size,
+            partial_obs=partial_obs
         )
 
     def _gen_grid(self, width, height):
