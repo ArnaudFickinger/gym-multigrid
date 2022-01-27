@@ -9,6 +9,7 @@ class SoccerGameEnv(MultiGridEnv):
         self,
         size=10,
         view_size=3,
+        partial_obs=True,
         width=None,
         height=None,
         goal_pst = [],
@@ -39,6 +40,7 @@ class SoccerGameEnv(MultiGridEnv):
             # Set this to True for maximum speed
             see_through_walls=False,
             agents=agents,
+            partial_obs=partial_obs,
             agent_view_size=view_size
         )
 
