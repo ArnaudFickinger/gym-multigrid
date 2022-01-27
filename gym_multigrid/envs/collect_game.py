@@ -15,6 +15,7 @@ class CollectGameEnv(MultiGridEnv):
         balls_index=[],
         balls_reward=[],
         zero_sum = False,
+        partial_obs=True,
         view_size=7
 
     ):
@@ -37,6 +38,7 @@ class CollectGameEnv(MultiGridEnv):
             # Set this to True for maximum speed
             see_through_walls=False,
             agents=agents,
+            partial_obs=partial_obs,
             agent_view_size=view_size
         )
 
