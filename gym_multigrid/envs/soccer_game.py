@@ -105,16 +105,3 @@ class SoccerGameEnv(MultiGridEnv):
     def step(self, actions):
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
         return obs, rewards, done, info
-
-
-class SoccerGame4HEnv10x15N2(SoccerGameEnv):
-    def __init__(self):
-        super().__init__(size=None,
-        height=10,
-        width=15,
-        goal_pst = [[1,5], [13,5]],
-        goal_index = [1,2],
-        num_balls=[1],
-        agents_index = [1,1,2,2],
-        balls_index=[0],
-        zero_sum=True)
