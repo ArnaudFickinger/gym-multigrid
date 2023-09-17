@@ -84,7 +84,7 @@ class CollectGameEnv(MultiGridEnv):
 
     def step(self, actions):
         obs, rewards, done, info = MultiGridEnv.step(self, actions)
-        return obs, rewards, done, info
+        return obs, rewards, done, False, info
 
 
 class CollectGame4HEnv10x10N2(CollectGameEnv):
