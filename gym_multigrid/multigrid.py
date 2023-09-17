@@ -1,9 +1,6 @@
-import math
-import gym
-from enum import IntEnum
-import numpy as np
-from gym import error, spaces, utils
-from gym.utils import seeding
+import gymnasium
+from gymnasium.utils import seeding
+
 from .rendering import *
 from .window import Window
 import numpy as np
@@ -577,8 +574,8 @@ class Grid:
         self.grid[j * self.width + i] = v
 
     def get(self, i, j):
-        assert i >= 0 and i < self.width
-        assert j >= 0 and j < self.height
+        assert i >= 0 and i < self.width, "i = %d, width = %d" % (i, self.width)
+        assert j >= 0 and j < self.height , "j = %d, height = %d" % (j, self.height)
         return self.grid[j * self.width + i]
 
     def horz_wall(self, world, x, y, length=None, obj_type=Wall):
@@ -781,7 +778,7 @@ class Grid:
     #     width, height, channels = array.shape
     #     assert channels == 3
     #
-    #     vis_mask = np.ones(shape=(width, height), dtype=np.bool)
+    #     vis_mask = np.ones(shape=(width, height), dtype=bool)
     #
     #     grid = Grid(width, height)
     #     for i in range(width):
@@ -794,7 +791,7 @@ class Grid:
     #     return grid, vis_mask
 
     def process_vis(grid, agent_pos):
-        mask = np.zeros(shape=(grid.width, grid.height), dtype=np.bool)
+        mask = np.zeros(shape=(grid.width, grid.height), dtype=bool)
 
         mask[agent_pos[0], agent_pos[1]] = True
 
@@ -869,7 +866,7 @@ class MineActions:
     forward = 3
     build = 4
 
-class MultiGridEnv(gym.Env):
+class MultiGridEnv(gymnasium.Env):
     """
     2D grid world game environment
     """
@@ -888,7 +885,6 @@ class MultiGridEnv(gym.Env):
             height=None,
             max_steps=100,
             see_through_walls=False,
-            seed=2,
             agents=None,
             partial_obs=True,
             agent_view_size=7,
@@ -910,20 +906,20 @@ class MultiGridEnv(gym.Env):
         self.actions = actions_set
 
         # Actions are discrete integer values
-        self.action_space = spaces.Discrete(len(self.actions.available))
+        self.action_space = gymnasium.spaces.Discrete(len(self.actions.available))
 
         self.objects=objects_set
 
         if partial_obs:
-            self.observation_space = spaces.Box(
+            self.observation_space = gymnasium.spaces.Box(
                 low=0,
                 high=255,
                 shape=(agent_view_size, agent_view_size, self.objects.encode_dim),
-                dtype='uint8'
+                dtype=int,
             )
 
         else:
-            self.observation_space = spaces.Box(
+            self.observation_space = gymnasium.spaces.Box(
                 low=0,
                 high=255,
                 shape=(width, height, self.objects.encode_dim),
@@ -945,13 +941,12 @@ class MultiGridEnv(gym.Env):
         self.max_steps = max_steps
         self.see_through_walls = see_through_walls
 
-        # Initialize the RNG
-        self.seed(seed=seed)
-
         # Initialize the state
         self.reset()
 
-    def reset(self):
+    def reset(self, seed=None, options=None):
+        if seed is not None:
+            self.seed(seed=seed)
 
         # Generate a new random grid at the start of each episode
         # To keep the same grid for each episode, call env.seed() with
@@ -1078,7 +1073,7 @@ class MultiGridEnv(gym.Env):
         Generate random integer in [low,high[
         """
 
-        return self.np_random.randint(low, high)
+        return self.np_random.integers(low, high)
 
     def _rand_float(self, low, high):
         """
@@ -1092,7 +1087,7 @@ class MultiGridEnv(gym.Env):
         Generate random boolean value
         """
 
-        return (self.np_random.randint(0, 2) == 0)
+        return (self.np_random.integers(0, 2) == 0)
 
     def _rand_elem(self, iterable):
         """
@@ -1133,8 +1128,8 @@ class MultiGridEnv(gym.Env):
         """
 
         return (
-            self.np_random.randint(xLow, xHigh),
-            self.np_random.randint(yLow, yHigh)
+            self.np_random.integers(xLow, xHigh),
+            self.np_random.integers(yLow, yHigh)
         )
 
     def place_obj(self,
@@ -1319,7 +1314,7 @@ class MultiGridEnv(gym.Env):
 
         obs=[self.objects.normalize_obs*ob for ob in obs]
 
-        return obs, rewards, done, {}
+        return obs, rewards, done, False, {}
 
     def gen_obs_grid(self):
         """
@@ -1345,7 +1340,7 @@ class MultiGridEnv(gym.Env):
             if not self.see_through_walls:
                 vis_mask = grid.process_vis(agent_pos=(a.view_size // 2, a.view_size - 1))
             else:
-                vis_mask = np.ones(shape=(grid.width, grid.height), dtype=np.bool)
+                vis_mask = np.ones(shape=(grid.width, grid.height), dtype=bool)
 
             grids.append(grid)
             vis_masks.append(vis_mask)
