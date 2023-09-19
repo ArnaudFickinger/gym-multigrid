@@ -909,7 +909,7 @@ class MultiGridEnv(gymnasium.Env):
     2D grid world game environment
     """
 
-    metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 10}
+    metadata = {"render_modes": ["human"], "video.frames_per_second": 10}
 
     # Enumeration of possible actions
 
@@ -978,7 +978,10 @@ class MultiGridEnv(gymnasium.Env):
         self.see_through_walls = see_through_walls
 
         # Initialize the state
+        self.grid = None
+        self.agent_pos = None
         self.reset()
+
 
     def reset(self, seed=None, options=None):
         if seed is not None:
@@ -1012,7 +1015,8 @@ class MultiGridEnv(gymnasium.Env):
                 for i in range(len(self.agents))
             ]
         obs = [self.objects.normalize_obs * ob for ob in obs]
-        return obs
+        info = {}
+        return obs, info
 
     def seed(self, seed=1337):
         # Seed the random number generator
@@ -1022,61 +1026,6 @@ class MultiGridEnv(gymnasium.Env):
     @property
     def steps_remaining(self):
         return self.max_steps - self.step_count
-
-    def __str__(self):
-        """
-        Produce a pretty string of the environment's grid along with the agent.
-        A grid cell is represented by 2-character string, the first one for
-        the object and the second one for the color.
-        """
-
-        # Map of object types to short string
-        OBJECT_TO_STR = {
-            "wall": "W",
-            "floor": "F",
-            "door": "D",
-            "key": "K",
-            "ball": "A",
-            "box": "B",
-            "goal": "G",
-            "lava": "V",
-        }
-
-        # Short string for opened door
-        OPENDED_DOOR_IDS = "_"
-
-        # Map agent's direction to short string
-        AGENT_DIR_TO_STR = {0: ">", 1: "V", 2: "<", 3: "^"}
-
-        str = ""
-
-        for j in range(self.grid.height):
-            for i in range(self.grid.width):
-                if i == self.agent_pos[0] and j == self.agent_pos[1]:
-                    str += 2 * AGENT_DIR_TO_STR[self.agent_dir]
-                    continue
-
-                c = self.grid.get(i, j)
-
-                if c == None:
-                    str += "  "
-                    continue
-
-                if c.type == "door":
-                    if c.is_open:
-                        str += "__"
-                    elif c.is_locked:
-                        str += "L" + c.color[0].upper()
-                    else:
-                        str += "D" + c.color[0].upper()
-                    continue
-
-                str += OBJECT_TO_STR[c.type] + c.color[0].upper()
-
-            if j < self.grid.height - 1:
-                str += "\n"
-
-        return str
 
     def _gen_grid(self, width, height):
         assert False, "_gen_grid needs to be implemented by each environment"
