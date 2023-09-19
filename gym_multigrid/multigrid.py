@@ -925,6 +925,7 @@ class MultiGridEnv(gymnasium.Env):
         agent_view_size=7,
         actions_set=Actions,
         objects_set=World,
+        render_mode=None,
     ):
         self.agents = agents
 
@@ -1409,7 +1410,7 @@ class MultiGridEnv(gymnasium.Env):
 
         return img
 
-    def render(self, mode="human", close=False, highlight=False, tile_size=TILE_PIXELS):
+    def render(self, close=False, highlight=False, tile_size=TILE_PIXELS):
         """
         Render the whole-grid human view
         """
@@ -1419,7 +1420,7 @@ class MultiGridEnv(gymnasium.Env):
                 self.window.close()
             return
 
-        if mode == "human" and not self.window:
+        if self.render_mode == "human" and not self.window:
             self.window = Window("gym_multigrid")
             self.window.show(block=False)
 
@@ -1467,7 +1468,7 @@ class MultiGridEnv(gymnasium.Env):
             highlight_masks=highlight_masks if highlight else None,
         )
 
-        if mode == "human":
+        if self.render_mode == "human":
             self.window.show_img(img)
 
         return img
