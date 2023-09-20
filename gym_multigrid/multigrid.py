@@ -1251,7 +1251,7 @@ class MultiGridEnv(gymnasium.Env):
                 if fwd_cell is not None:
                     if fwd_cell.type == "goal":
                         done = True
-                        self._reward(i, rewards, 1)
+                        rewards[i] += self._reward(i, rewards, 1)
                     elif fwd_cell.type == "switch":
                         self._handle_switch(i, rewards, fwd_pos, fwd_cell)
                 elif fwd_cell is None or fwd_cell.can_overlap():
