@@ -2,119 +2,12 @@ import gymnasium
 import pygame
 from gymnasium.utils import seeding
 
-from .rendering import *
-from .window import Window
+from gym_multigrid.actions import Actions
+from gym_multigrid.rendering import *
+from gym_multigrid.window import Window
 import numpy as np
 
-from .world_objects import Grid, COLOR_NAMES, TILE_PIXELS
-
-
-class World:
-    encode_dim = 6
-
-    normalize_obs = 1
-
-    # Used to map colors to integers
-    COLOR_TO_IDX = {
-        "red": 0,
-        "green": 1,
-        "blue": 2,
-        "purple": 3,
-        "yellow": 4,
-        "grey": 5,
-    }
-
-    IDX_TO_COLOR = dict(zip(COLOR_TO_IDX.values(), COLOR_TO_IDX.keys()))
-
-    # Map of object type to integers
-    OBJECT_TO_IDX = {
-        "unseen": 0,
-        "empty": 1,
-        "wall": 2,
-        "floor": 3,
-        "door": 4,
-        "key": 5,
-        "ball": 6,
-        "box": 7,
-        "goal": 8,
-        "lava": 9,
-        "agent": 10,
-        "objgoal": 11,
-        "switch": 12,
-    }
-    IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
-
-
-class SmallWorld:
-    encode_dim = 3
-
-    normalize_obs = 1 / 3
-
-    COLOR_TO_IDX = {"red": 0, "green": 1, "blue": 2, "grey": 3}
-
-    IDX_TO_COLOR = dict(zip(COLOR_TO_IDX.values(), COLOR_TO_IDX.keys()))
-
-    OBJECT_TO_IDX = {"unseen": 0, "empty": 1, "wall": 2, "agent": 3}
-
-    IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
-
-
-# Map of state names to integers
-STATE_TO_IDX = {
-    "open": 0,
-    "closed": 1,
-    "locked": 2,
-}
-
-
-
-class Actions:
-    available = [
-        "still",
-        "left",
-        "right",
-        "forward",
-        "pickup",
-        "drop",
-        "toggle",
-        "done",
-    ]
-
-    still = 0
-    # Turn left, turn right, move forward
-    left = 1
-    right = 2
-    forward = 3
-
-    # Pick up an object
-    pickup = 4
-    # Drop an object
-    drop = 5
-    # Toggle/activate an object
-    toggle = 6
-
-    # Done completing task
-    done = 7
-
-
-class SmallActions:
-    available = ["still", "left", "right", "forward"]
-
-    # Turn left, turn right, move forward
-    still = 0
-    left = 1
-    right = 2
-    forward = 3
-
-
-class MineActions:
-    available = ["still", "left", "right", "forward", "build"]
-
-    still = 0
-    left = 1
-    right = 2
-    forward = 3
-    build = 4
+from gym_multigrid.world_objects import Grid, COLOR_NAMES, TILE_PIXELS, World
 
 
 class MultiGridEnv(gymnasium.Env):
@@ -122,7 +15,7 @@ class MultiGridEnv(gymnasium.Env):
     2D grid world game environment
     """
 
-    metadata = {"render_modes": ["human"], "video.frames_per_second": 10}
+    metadata = {"render_modes": ["human"], "render_fps": 10}
 
     # Enumeration of possible actions
 
@@ -137,8 +30,12 @@ class MultiGridEnv(gymnasium.Env):
         partial_obs=True,
         agent_view_size=7,
         actions_set=Actions,
-        objects_set=World,
+        objects_set=None,
+        highlight: bool = True,
+        tile_size: int = TILE_PIXELS,
+        agent_pov: bool = False,
         render_mode=None,
+        screen_size: int = 480,
     ):
         self.agents = agents
 
@@ -157,14 +54,14 @@ class MultiGridEnv(gymnasium.Env):
         # Actions are discrete integer values
         self.action_space = gymnasium.spaces.Discrete(len(self.actions.available))
 
-        self.objects = objects_set
+        self.objects = objects_set or World
 
         if partial_obs:
             self.observation_space = gymnasium.spaces.Box(
                 low=0,
                 high=255,
                 shape=(agent_view_size, agent_view_size, self.objects.encode_dim),
-                dtype=int,
+                dtype="uint8",
             )
 
         else:
@@ -194,6 +91,18 @@ class MultiGridEnv(gymnasium.Env):
         self.grid = None
         self.agent_pos = None
         self.reset()
+
+        # rendering
+        self.render_mode = render_mode
+        self.screen_size = screen_size
+        self.screen_width = self.screen_size
+        self.screen_height = self.screen_size
+        self.render_size = None
+        self.highlight = highlight
+        self.tile_size = tile_size
+        self.agent_pov = agent_pov
+        self.agent_view_size = agent_view_size
+        self.clock = None
 
     def reset(self, seed=None, options=None):
         if seed is not None:
@@ -573,7 +482,7 @@ class MultiGridEnv(gymnasium.Env):
 
         return img
 
-    def render(self, close=False, highlight=False, tile_size=TILE_PIXELS):
+    def _render(self, close=False, highlight=False, tile_size=TILE_PIXELS):
         """
         Render the whole-grid human view
         """
@@ -627,8 +536,10 @@ class MultiGridEnv(gymnasium.Env):
         # Render the whole grid
         img = self.grid.render(
             self.objects,
-            tile_size,
-            highlight_masks=highlight_masks if highlight else None,
+            agent_pos=self.agents[0].pos,
+            agent_dir=self.agents[0].dir,
+            tile_size=tile_size,
+            highlight_mask=highlight_masks if highlight else None,
         )
 
         if self.render_mode == "human":
@@ -636,7 +547,7 @@ class MultiGridEnv(gymnasium.Env):
 
         return img
 
-    def _render(self):
+    def render(self):
         img = self.get_frame(self.highlight, self.tile_size, self.agent_pov)
 
         if self.render_mode == "human":
@@ -647,7 +558,7 @@ class MultiGridEnv(gymnasium.Env):
                 pygame.init()
                 pygame.display.init()
                 self.window = pygame.display.set_mode(
-                    (self.screen_size, self.screen_size)
+                    (self.screen_width, self.screen_height)
                 )
                 pygame.display.set_caption("minigrid")
             if self.clock is None:
@@ -667,12 +578,12 @@ class MultiGridEnv(gymnasium.Env):
             bg = pygame.transform.smoothscale(bg, (self.screen_size, self.screen_size))
 
             font_size = 22
-            text = self.mission
-            font = pygame.freetype.SysFont(pygame.font.get_default_font(), font_size)
-            text_rect = font.get_rect(text, size=font_size)
-            text_rect.center = bg.get_rect().center
-            text_rect.y = bg.get_height() - font_size * 1.5
-            font.render_to(bg, text_rect, text, size=font_size)
+            # text = self.mission
+            # font = pygame.freetype.SysFont(pygame.font.get_default_font(), font_size)
+            # text_rect = font.get_rect(text, size=font_size)
+            # text_rect.center = bg.get_rect().center
+            # text_rect.y = bg.get_height() - font_size * 1.5
+            # font.render_to(bg, text_rect, text, size=font_size)
 
             self.window.blit(bg, (0, 0))
             pygame.event.pump()
@@ -732,10 +643,10 @@ class MultiGridEnv(gymnasium.Env):
 
         # Compute the world coordinates of the bottom-left corner
         # of the agent's view area
-        f_vec = self.dir_vec
-        r_vec = self.right_vec
+        f_vec = self.agents[0].dir_vec
+        r_vec = self.agents[0].right_vec
         top_left = (
-            self.agent_pos
+            self.agents[0].pos
             + f_vec * (self.agent_view_size - 1)
             - r_vec * (self.agent_view_size // 2)
         )
@@ -744,10 +655,10 @@ class MultiGridEnv(gymnasium.Env):
         highlight_mask = np.zeros(shape=(self.width, self.height), dtype=bool)
 
         # For each cell in the visibility mask
-        for vis_j in range(0, self.agent_view_size):
-            for vis_i in range(0, self.agent_view_size):
+        for vis_j in range(self.agent_view_size):
+            for vis_i in range(self.agent_view_size):
                 # If this cell is not visible, don't highlight it
-                if not vis_mask[vis_i, vis_j]:
+                if not vis_mask[0][vis_i][vis_j]:
                     continue
 
                 # Compute the world coordinates of this cell
@@ -763,9 +674,10 @@ class MultiGridEnv(gymnasium.Env):
 
         # Render the whole grid
         img = self.grid.render(
-            tile_size,
-            self.agent_pos,
-            self.agent_dir,
+            world=self.objects,
+            tile_size=tile_size,
+            agent_pos=self.agents[0].pos,
+            agent_dir=self.agents[0].dir,
             highlight_mask=highlight_mask if highlight else None,
         )
 

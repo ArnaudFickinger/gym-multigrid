@@ -1,4 +1,5 @@
 import math
+from typing import Any
 
 import numpy as np
 
@@ -8,11 +9,13 @@ from gym_multigrid.rendering import (
     point_in_rect,
     point_in_line,
     point_in_triangle,
-    rotate_fn, downsample, highlight_img,
+    rotate_fn,
+    downsample,
+    highlight_img,
 )
 
 # Size in pixels of a tile in the full-scale human view
-TILE_PIXELS = 32
+TILE_PIXELS = 48
 
 
 # Map of color names to RGB values
@@ -39,6 +42,64 @@ DIR_TO_VEC = [
     # Up (negative Y)
     np.array((0, -1)),
 ]
+
+
+class World:
+    encode_dim = 6
+
+    normalize_obs = 1
+
+    # Used to map colors to integers
+    COLOR_TO_IDX = {
+        "red": 0,
+        "green": 1,
+        "blue": 2,
+        "purple": 3,
+        "yellow": 4,
+        "grey": 5,
+    }
+
+    IDX_TO_COLOR = dict(zip(COLOR_TO_IDX.values(), COLOR_TO_IDX.keys()))
+
+    # Map of object type to integers
+    OBJECT_TO_IDX = {
+        "unseen": 0,
+        "empty": 1,
+        "wall": 2,
+        "floor": 3,
+        "door": 4,
+        "key": 5,
+        "ball": 6,
+        "box": 7,
+        "goal": 8,
+        "lava": 9,
+        "agent": 10,
+        "objgoal": 11,
+        "switch": 12,
+    }
+    IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
+
+
+class SmallWorld:
+    encode_dim = 3
+
+    normalize_obs = 1 / 3
+
+    COLOR_TO_IDX = {"red": 0, "green": 1, "blue": 2, "grey": 3}
+
+    IDX_TO_COLOR = dict(zip(COLOR_TO_IDX.values(), COLOR_TO_IDX.keys()))
+
+    OBJECT_TO_IDX = {"unseen": 0, "empty": 1, "wall": 2, "agent": 3}
+
+    IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
+
+
+# Map of state names to integers
+STATE_TO_IDX = {
+    "open": 0,
+    "closed": 1,
+    "locked": 2,
+}
 
 
 class WorldObj:
@@ -614,13 +675,22 @@ class Grid:
         return grid
 
     @classmethod
-    def render_tile(cls, world, obj, highlights=[], tile_size=TILE_PIXELS, subdivs=3):
+    def render_tile(
+        cls,
+        world: World,
+        obj: WorldObj | None,
+        agent_dir: int | None = None,
+        highlight: bool = False,
+        tile_size: int = TILE_PIXELS,
+        subdivs: int = 3,
+    ) -> np.ndarray:
         """
         Render a tile and cache the result
         """
 
-        key = (*highlights, tile_size)
-        key = obj.encode(world) + key if obj else key
+        # Hash map lookup key for the cache
+        key: tuple[Any, ...] = (agent_dir, highlight, tile_size)
+        key = obj.encode(world=world) + key if obj else key
 
         if key in cls.tile_cache:
             return cls.tile_cache[key]
@@ -633,15 +703,24 @@ class Grid:
         fill_coords(img, point_in_rect(0, 0.031, 0, 1), (100, 100, 100))
         fill_coords(img, point_in_rect(0, 1, 0, 0.031), (100, 100, 100))
 
-        if obj != None:
+        if obj is not None:
             obj.render(img)
 
-        # Highlight the cell  if needed
-        if len(highlights) > 0:
-            for h in highlights:
-                highlight_img(
-                    img, color=COLORS[world.IDX_TO_COLOR[h % len(world.IDX_TO_COLOR)]]
-                )
+        # Overlay the agent on top
+        if agent_dir is not None:
+            tri_fn = point_in_triangle(
+                (0.12, 0.19),
+                (0.87, 0.50),
+                (0.12, 0.81),
+            )
+
+            # Rotate the agent based on its direction
+            tri_fn = rotate_fn(tri_fn, cx=0.5, cy=0.5, theta=0.5 * math.pi * agent_dir)
+            fill_coords(img, tri_fn, (255, 0, 0))
+
+        # Highlight the cell if needed
+        if highlight:
+            highlight_img(img)
 
         # Downsample the image to perform supersampling/anti-aliasing
         img = downsample(img, subdivs)
@@ -651,12 +730,22 @@ class Grid:
 
         return img
 
-    def render(self, world, tile_size, highlight_masks=None):
+    def render(
+        self,
+        world: World,
+        tile_size: int,
+        agent_pos: tuple[int, int],
+        agent_dir: int | None = None,
+        highlight_mask: np.ndarray | None = None,
+    ) -> np.ndarray:
         """
         Render this grid at a given scale
         :param r: target renderer object
         :param tile_size: tile size in pixels
         """
+
+        if highlight_mask is None:
+            highlight_mask = np.zeros(shape=(self.width, self.height), dtype=bool)
 
         # Compute the total grid size
         width_px = self.width * tile_size
@@ -669,11 +758,13 @@ class Grid:
             for i in range(0, self.width):
                 cell = self.get(i, j)
 
-                # agent_here = np.array_equal(agent_pos, (i, j))
+                agent_here = np.array_equal(agent_pos, (i, j))
+                assert highlight_mask is not None
                 tile_img = Grid.render_tile(
-                    world,
-                    cell,
-                    highlights=[] if highlight_masks is None else highlight_masks[i, j],
+                    world=world,
+                    obj=cell,
+                    agent_dir=agent_dir if agent_here else None,
+                    highlight=highlight_mask[i, j],
                     tile_size=tile_size,
                 )
 
