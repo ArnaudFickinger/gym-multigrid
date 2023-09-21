@@ -15,7 +15,7 @@ class MultiGridEnv(gymnasium.Env):
     2D grid world game environment
     """
 
-    metadata = {"render_modes": ["human"], "render_fps": 10}
+    metadata = {"render_modes": ["human","rgb_array"], "render_fps": 10}
 
     # Enumeration of possible actions
 
@@ -547,10 +547,11 @@ class MultiGridEnv(gymnasium.Env):
 
         return img
 
-    def render(self):
+    def render(self, render_mode=None):
         img = self.get_frame(self.highlight, self.tile_size, self.agent_pov)
-
-        if self.render_mode == "human":
+        if not render_mode:
+            render_mode = self.render_mode
+        if render_mode == "human":
             img = np.transpose(img, axes=(1, 0, 2))
             if self.render_size is None:
                 self.render_size = img.shape[:2]
@@ -590,7 +591,7 @@ class MultiGridEnv(gymnasium.Env):
             self.clock.tick(self.metadata["render_fps"])
             pygame.display.flip()
 
-        elif self.render_mode == "rgb_array":
+        elif render_mode == "rgb_array":
             return img
 
     def get_frame(
